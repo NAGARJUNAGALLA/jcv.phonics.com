@@ -11,6 +11,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+// Explicit imports required for Kotlin delegation
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,7 +54,8 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
 @Composable
 fun PhonicsApp(tts: TextToSpeech) {
-    var currentDay by remember { mutableIntStateOf(1) }
+    // Changed to mutableStateOf to ensure broad compatibility
+    var currentDay by remember { mutableStateOf(1) }
     val totalDays = 3 
 
     Scaffold(
