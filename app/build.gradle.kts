@@ -18,8 +18,19 @@ android {
     buildFeatures {
         compose = true
     }
+    
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
+    }
+
+    // --- FIX: Aligns Java and Kotlin compilers to Java 17 ---
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
