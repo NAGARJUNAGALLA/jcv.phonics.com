@@ -11,15 +11,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,16 +33,6 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
-
-// --- App Color Theme ---
-val AppBackground = Color(0xFFF4F9F9)
-val ThemeRed = Color(0xFFFF4757)
-val ThemeBlue = Color(0xFF1E90FF)
-val ThemeGreen = Color(0xFF2ED573)
-val ThemeOrange = Color(0xFFFFA502)
-val ThemePurple = Color(0xFF9B59B6)
-val TextDark = Color(0xFF2F3542)
-val StoryBackground = Color(0xFFFFF2CC)
 
 class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
@@ -57,14 +43,13 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         tts = TextToSpeech(this, this)
         
         setContent {
+            // State to control when to show the splash screen vs the main app
             var showSplash by remember { mutableStateOf(true) }
 
-            MaterialTheme {
-                if (showSplash) {
-                    SplashScreen(onTimeout = { showSplash = false })
-                } else {
-                    MainScreen(tts)
-                }
+            if (showSplash) {
+                SplashScreen(onTimeout = { showSplash = false })
+            } else {
+                PhonicsApp(tts)
             }
         }
     }
@@ -84,11 +69,23 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     }
 }
 
+// --- App Color Theme ---
+val AppBackground = Color(0xFFF4F9F9)
+val ThemeRed = Color(0xFFFF4757)
+val ThemeBlue = Color(0xFF1E90FF)
+val ThemeGreen = Color(0xFF2ED573)
+val ThemeOrange = Color(0xFFFFA502)
+val ThemePurple = Color(0xFF9B59B6)
+val TextDark = Color(0xFF2F3542)
+val StoryBackground = Color(0xFFFFF2CC)
+
 // ==========================================
 // SPLASH SCREEN COMPONENT
 // ==========================================
+
 @Composable
 fun SplashScreen(onTimeout: () -> Unit) {
+    // Timer waits 2.5 seconds before triggering the transition to the main app
     LaunchedEffect(Unit) {
         delay(2500)
         onTimeout()
@@ -133,279 +130,11 @@ fun SplashScreen(onTimeout: () -> Unit) {
 }
 
 // ==========================================
-// TAB NAVIGATION COMPONENT
+// MAIN APP CONTENT
 // ==========================================
+
 @Composable
-fun MainScreen(tts: TextToSpeech) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Maths", "Phonics")
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = Color(0xFFF4F4F9),
-            indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
-                    Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                    color = Color(0xFFD11A4F)
-                )
-            }
-        ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    text = { 
-                        Text(
-                            text = title, 
-                            fontWeight = FontWeight.Bold,
-                            color = if (selectedTabIndex == index) Color(0xFFD11A4F) else Color.Gray
-                        ) 
-                    }
-                )
-            }
-        }
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (selectedTabIndex) {
-                0 -> MathsScreen()
-                1 -> PhonicsScreen(tts)
-            }
-        }
-    }
-}
-
-// ==========================================
-// MATHS SCREEN COMPONENT
-// ==========================================
-@Composable
-fun MathsScreen() {
-    var start by remember { mutableIntStateOf(0) }
-    var add1 by remember { mutableIntStateOf(0) }
-    var add2 by remember { mutableIntStateOf(0) }
-    var add3 by remember { mutableIntStateOf(0) }
-
-    var ans1 by remember { mutableStateOf("") }
-    var ans2 by remember { mutableStateOf("") }
-    var ans3 by remember { mutableStateOf("") }
-
-    var feedbackMessage by remember { mutableStateOf("") }
-    var isSuccess by remember { mutableStateOf(false) }
-    var ans1Status by remember { mutableStateOf(InputStatus.IDLE) }
-    var ans2Status by remember { mutableStateOf(InputStatus.IDLE) }
-    var ans3Status by remember { mutableStateOf(InputStatus.IDLE) }
-    var isLoading by remember { mutableStateOf(false) }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    fun generateProblem() {
-        start = (1000..3000).random()
-        add1 = (1000..3000).random()
-        add2 = (1000..3000).random()
-        add3 = (1000..3000).random()
-        ans1 = ""
-        ans2 = ""
-        ans3 = ""
-        ans1Status = InputStatus.IDLE
-        ans2Status = InputStatus.IDLE
-        ans3Status = InputStatus.IDLE
-        feedbackMessage = ""
-        isSuccess = false
-        isLoading = false
-    }
-
-    LaunchedEffect(Unit) { generateProblem() }
-
-    fun checkAnswers() {
-        val a1 = ans1.toIntOrNull() ?: 0
-        val a2 = ans2.toIntOrNull() ?: 0
-        val a3 = ans3.toIntOrNull() ?: 0
-
-        val correct1 = start + add1
-        val correct2 = correct1 + add2
-        val correct3 = correct2 + add3
-
-        ans1Status = if (a1 == correct1) InputStatus.CORRECT else InputStatus.INCORRECT
-        ans2Status = if (a2 == correct2) InputStatus.CORRECT else InputStatus.INCORRECT
-        ans3Status = if (a3 == correct3) InputStatus.CORRECT else InputStatus.INCORRECT
-
-        if (ans1Status == InputStatus.CORRECT && ans2Status == InputStatus.CORRECT && ans3Status == InputStatus.CORRECT) {
-            feedbackMessage = "Excellent! Generating next problem..."
-            isSuccess = true
-            isLoading = true
-            coroutineScope.launch {
-                delay(2000)
-                generateProblem()
-            }
-        } else {
-            feedbackMessage = "Oops! Check the red boxes and try again."
-            isSuccess = false
-        }
-    }
-
-    val boxWidth = 85.dp
-    val textWidth = 85.dp
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF4F4F9))
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Fill the blanks with suitable numbers by doing additions and follow directions",
-            color = Color(0xFFD11A4F),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 32.dp, top = 16.dp)
-        )
-
-        Column(horizontalAlignment = Alignment.Start) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .width(boxWidth)
-                        .height(55.dp)
-                        .background(Color(0xFFFFEBEE))
-                        .border(2.dp, Color(0xFFE53935))
-                ) {
-                    Text(text = start.toString(), fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
-                Text(
-                    text = "+ $add1 ➔",
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(textWidth)
-                )
-                MathInputField(
-                    value = ans1,
-                    onValueChange = { ans1 = it },
-                    status = ans1Status,
-                    borderColor = Color(0xFFC0CA33),
-                    enabled = !isLoading,
-                    width = boxWidth
-                )
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Spacer(modifier = Modifier.width(boxWidth + textWidth)) 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally, 
-                    modifier = Modifier.width(boxWidth).padding(vertical = 4.dp)
-                ) {
-                    Text(text = "+ $add2", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text(text = "↓", color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Spacer(modifier = Modifier.width(boxWidth + textWidth))
-                MathInputField(
-                    value = ans2,
-                    onValueChange = { ans2 = it },
-                    status = ans2Status,
-                    borderColor = Color(0xFFE91E63),
-                    enabled = !isLoading,
-                    width = boxWidth
-                )
-                Text(
-                    text = "+ $add3 ➔",
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(textWidth)
-                )
-                MathInputField(
-                    value = ans3,
-                    onValueChange = { ans3 = it },
-                    status = ans3Status,
-                    borderColor = Color(0xFF8E24AA),
-                    enabled = !isLoading,
-                    width = boxWidth
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Button(
-            onClick = { checkAnswers() },
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .height(55.dp)
-        ) {
-            Text(if (isLoading) "Loading..." else "Check Answers", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = feedbackMessage,
-            color = if (isSuccess) Color(0xFF2E7D32) else Color(0xFFC62828),
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MathInputField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    status: InputStatus,
-    borderColor: Color,
-    enabled: Boolean,
-    width: Dp
-) {
-    val backgroundColor = when (status) {
-        InputStatus.IDLE -> Color.White
-        InputStatus.CORRECT -> Color(0xFFE8F5E9)
-        InputStatus.INCORRECT -> Color(0xFFFFEBEE)
-    }
-    
-    val textColor = when (status) {
-        InputStatus.IDLE -> Color.Black
-        InputStatus.CORRECT -> Color(0xFF2E7D32)
-        InputStatus.INCORRECT -> Color(0xFFC62828)
-    }
-
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        enabled = enabled,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        textStyle = LocalTextStyle.current.copy(
-            textAlign = TextAlign.Center, 
-            fontWeight = FontWeight.Bold,
-            color = textColor,
-            fontSize = 16.sp
-        ),
-        singleLine = true,
-        modifier = Modifier
-            .width(width)
-            .height(55.dp)
-            .background(backgroundColor),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            unfocusedBorderColor = borderColor,
-            focusedBorderColor = borderColor,
-            disabledBorderColor = borderColor
-        )
-    )
-}
-
-enum class InputStatus { IDLE, CORRECT, INCORRECT }
-
-// ==========================================
-// PHONICS SCREEN COMPONENT
-// ==========================================
-@Composable
-fun PhonicsScreen(tts: TextToSpeech) {
+fun PhonicsApp(tts: TextToSpeech) {
     val currentDay = remember { mutableStateOf(1) }
     val totalDays = 5
 
@@ -464,6 +193,10 @@ fun PhonicsScreen(tts: TextToSpeech) {
     }
 }
 
+// ==========================================
+// MASCOT HEADER COMPONENT
+// ==========================================
+
 @Composable
 fun MascotHeader(tts: TextToSpeech) {
     val coroutineScope = rememberCoroutineScope()
@@ -521,6 +254,10 @@ fun MascotHeader(tts: TextToSpeech) {
         }
     }
 }
+
+// ==========================================
+// DAY CONTENT SECTIONS
+// ==========================================
 
 @Composable
 fun DayOneContent(tts: TextToSpeech) {
@@ -593,6 +330,49 @@ fun DayTwoContent(tts: TextToSpeech) {
             DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
             WordGrid(listOf("jam", "ram", "yam", "pam"), tts)
         }
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        SectionBox(borderColor = Theme blue) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("a p", ThemeOrange, tts, "ap")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("cap", "gap", "lap", "map","nap","rap","sap","tap"), tts)
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        SectionBox(borderColor = ThemeOrange) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("a g", ThemeOrange, tts, "ag")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("bag", "rag", "tag", "wag"), tts)
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("STORY TIME", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = ThemeGreen, letterSpacing = 1.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = StoryBackground),
+            border = BorderStroke(2.dp, ThemeGreen),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                TapWord("A bag is on my lap.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+                TapWord("It is my bag.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+                TapWord("A can of jam is in my bag.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+                TapWord("A tag is on the bag.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+            }
+        }
     }
 }
 
@@ -658,6 +438,10 @@ fun DayFiveContent(tts: TextToSpeech) {
         }
     }
 }
+
+// ==========================================
+// CUSTOM UI COMPONENTS & ANIMATIONS
+// ==========================================
 
 @Composable
 fun SectionBox(borderColor: Color, content: @Composable ColumnScope.() -> Unit) {
