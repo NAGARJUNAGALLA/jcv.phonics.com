@@ -52,10 +52,10 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
 @Composable
 fun PhonicsApp(tts: TextToSpeech) {
-    // FIX: Using '=' instead of 'by' and accessing via .value below
-    // This bypasses the CI compiler bug with Kotlin delegates
     val currentDay = remember { mutableStateOf(1) }
-    val totalDays = 3 
+    
+    // --- 1. INCREASE TOTAL DAYS HERE ---
+    val totalDays = 5 
 
     Scaffold(
         topBar = {
@@ -95,10 +95,13 @@ fun PhonicsApp(tts: TextToSpeech) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
+                // --- 2. ADD NEW DAYS TO THE ROUTER HERE ---
                 when (currentDay.value) {
                     1 -> DayOneContent(tts)
                     2 -> DayTwoContent(tts)
                     3 -> DayThreeContent(tts)
+                    4 -> DayFourContent(tts)
+                    5 -> DayFiveContent(tts)
                 }
             }
         }
@@ -121,6 +124,10 @@ fun BottomNavigationBar(currentDay: Int, totalDays: Int, onPrev: () -> Unit, onN
     }
 }
 
+// ==========================================
+// DAY CONTENT SECTIONS
+// ==========================================
+
 @Composable
 fun DayOneContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -129,14 +136,25 @@ fun DayOneContent(tts: TextToSpeech) {
         
         Spacer(modifier = Modifier.height(20.dp))
         
-        SectionBox(title = "Word Family", color = Color(0xFFFF4757)) {
+        SectionBox(title = "Word Family: at", color = Color(0xFFFF4757)) {
             TapWord("a t", tts, "at") 
             Spacer(modifier = Modifier.height(10.dp))
             Text("Words to Blend", fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TapWord("bat", tts) 
-                TapWord("cat", tts) 
-                TapWord("fat", tts) 
+            
+            // --- 3. STACK MULTIPLE ROWS FOR MORE WORDS ---
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TapWord("bat", tts) 
+                    TapWord("cat", tts) 
+                    TapWord("fat", tts) 
+                    TapWord("hat", tts)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TapWord("mat", tts)
+                    TapWord("pat", tts)
+                    TapWord("rat", tts)
+                    TapWord("sat", tts)
+                }
             }
         }
 
@@ -145,6 +163,8 @@ fun DayOneContent(tts: TextToSpeech) {
         SectionBox(title = "Story Time", color = Color(0xFF2ED573)) {
             TapWord("A cat is on a mat.", tts) 
             TapWord("It is a fat cat.", tts) 
+            TapWord("A man is sitting on the mat.", tts) 
+            TapWord("The man has a fan.", tts) 
         }
     }
 }
@@ -154,6 +174,19 @@ fun DayTwoContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("DAY 2", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFA502))
         Text("Phonic Drill: 'am', 'ag', 'ap'", color = Color.Gray) 
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        SectionBox(title = "Word Family: am", color = Color(0xFFFFA502)) {
+            TapWord("a m", tts, "am") 
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TapWord("jam", tts) 
+                TapWord("ram", tts) 
+                TapWord("yam", tts) 
+                TapWord("pam", tts) 
+            }
+        }
     }
 }
 
@@ -162,8 +195,80 @@ fun DayThreeContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("DAY 3", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2ED573))
         Text("Phonic Drill: 'ad', 'ab', 'ay', 'as'", color = Color.Gray) 
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        SectionBox(title = "Word Family: ad", color = Color(0xFF2ED573)) {
+            TapWord("a d", tts, "ad") 
+            Spacer(modifier = Modifier.height(10.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TapWord("bad", tts) 
+                    TapWord("dad", tts) 
+                    TapWord("had", tts) 
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TapWord("lad", tts) 
+                    TapWord("mad", tts) 
+                    TapWord("sad", tts) 
+                }
+            }
+        }
     }
 }
+
+// --- 4. CREATE NEW DAY FUNCTIONS ---
+@Composable
+fun DayFourContent(tts: TextToSpeech) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("DAY 4", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E90FF))
+        Text("Phonic Drill: 'en', 'et', 'ed'", color = Color.Gray) 
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        SectionBox(title = "Word Family: en", color = Color(0xFF1E90FF)) {
+            TapWord("e n", tts, "en") 
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TapWord("hen", tts) 
+                TapWord("men", tts) 
+                TapWord("pen", tts) 
+                TapWord("ten", tts) 
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TapWord("den", tts) 
+                TapWord("ben", tts) 
+                TapWord("sen", tts) 
+                TapWord("den", tts) 
+            }
+        }
+    }
+}
+
+@Composable
+fun DayFiveContent(tts: TextToSpeech) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("DAY 5", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9B59B6))
+        Text("Phonic Drill: 'ig', 'in', 'ip'", color = Color.Gray) 
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        SectionBox(title = "Word Family: ig", color = Color(0xFF9B59B6)) {
+            TapWord("i g", tts, "ig") 
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TapWord("big", tts) 
+                TapWord("dig", tts) 
+                TapWord("pig", tts) 
+                TapWord("wig", tts) 
+            }
+        }
+    }
+}
+
+// ==========================================
+// REUSABLE UI COMPONENTS
+// ==========================================
 
 @Composable
 fun SectionBox(title: String, color: Color, content: @Composable () -> Unit) {
