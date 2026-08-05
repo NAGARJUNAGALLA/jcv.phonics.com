@@ -4,32 +4,40 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 
 class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
-    
+
     private lateinit var tts: TextToSpeech
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
         tts = TextToSpeech(this, this)
-
         setContent {
             PhonicsApp(tts)
         }
@@ -38,8 +46,8 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts.language = Locale.US
-            tts.setSpeechRate(0.85f) 
-            tts.setPitch(1.2f)       
+            tts.setSpeechRate(0.85f)
+            tts.setPitch(1.2f)
         }
     }
 
@@ -50,31 +58,41 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     }
 }
 
+// --- App Color Theme ---
+val AppBackground = Color(0xFFF4F9F9)
+val ThemeRed = Color(0xFFFF4757)
+val ThemeBlue = Color(0xFF1E90FF)
+val ThemeGreen = Color(0xFF2ED573)
+val ThemeOrange = Color(0xFFFFA502)
+val ThemePurple = Color(0xFF9B59B6)
+val TextDark = Color(0xFF2F3542)
+val StoryBackground = Color(0xFFFFF2CC)
+
 @Composable
 fun PhonicsApp(tts: TextToSpeech) {
     val currentDay = remember { mutableStateOf(1) }
-    
-    // --- 1. INCREASE TOTAL DAYS HERE ---
-    val totalDays = 5 
+    val totalDays = 5 // Expanded to 5 Days
 
     Scaffold(
+        containerColor = AppBackground,
         topBar = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFFFF6B81), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                    .padding(20.dp),
+                    .padding(vertical = 20.dp, horizontal = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Phonics Bootcamp", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold) 
-                Spacer(modifier = Modifier.height(8.dp))
+                Text("Phonics Bootcamp", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "🔊 Tap any word or letter to hear it!", 
+                    text = "🔊 Tap any word or letter to hear it!",
                     modifier = Modifier
                         .background(Color(0xFFFECA57), shape = RoundedCornerShape(20.dp))
-                        .padding(horizontal = 15.dp, vertical = 5.dp),
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
                     fontWeight = FontWeight.Bold,
-                    color = Color.DarkGray
+                    color = TextDark,
+                    fontSize = 14.sp
                 )
             }
         },
@@ -95,7 +113,6 @@ fun PhonicsApp(tts: TextToSpeech) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                // --- 2. ADD NEW DAYS TO THE ROUTER HERE ---
                 when (currentDay.value) {
                     1 -> DayOneContent(tts)
                     2 -> DayTwoContent(tts)
@@ -108,22 +125,6 @@ fun PhonicsApp(tts: TextToSpeech) {
     }
 }
 
-@Composable
-fun BottomNavigationBar(currentDay: Int, totalDays: Int, onPrev: () -> Unit, onNext: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Button(onClick = onPrev, enabled = currentDay > 1) { Text("◀ Prev") } 
-        Text("Day $currentDay / $totalDays", fontWeight = FontWeight.Bold) 
-        Button(onClick = onNext, enabled = currentDay < totalDays) { Text("Next ▶") } 
-    }
-}
-
 // ==========================================
 // DAY CONTENT SECTIONS
 // ==========================================
@@ -131,40 +132,55 @@ fun BottomNavigationBar(currentDay: Int, totalDays: Int, onPrev: () -> Unit, onN
 @Composable
 fun DayOneContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("DAY 1", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFF4757)) 
-        Text("Phonic Drill: 'at' and 'an'", color = Color.Gray) 
-        
+        Text("DAY 1", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = ThemeRed, letterSpacing = 2.sp)
+        Text("Phonic Drill: 'at' and 'an'", color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(20.dp))
-        
-        SectionBox(title = "Word Family: at", color = Color(0xFFFF4757)) {
-            TapWord("a t", tts, "at") 
-            Spacer(modifier = Modifier.height(10.dp))
-            Text("Words to Blend", fontWeight = FontWeight.Bold)
-            
-            // --- 3. STACK MULTIPLE ROWS FOR MORE WORDS ---
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TapWord("bat", tts) 
-                    TapWord("cat", tts) 
-                    TapWord("fat", tts) 
-                    TapWord("hat", tts)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TapWord("mat", tts)
-                    TapWord("pat", tts)
-                    TapWord("rat", tts)
-                    TapWord("sat", tts)
-                }
+
+        // 'at' Family
+        SectionBox(borderColor = ThemeRed) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("a t", ThemeRed, tts, "at")
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("bat", "cat", "fat", "hat", "mat", "pat", "rat", "sat"), tts)
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        SectionBox(title = "Story Time", color = Color(0xFF2ED573)) {
-            TapWord("A cat is on a mat.", tts) 
-            TapWord("It is a fat cat.", tts) 
-            TapWord("A man is sitting on the mat.", tts) 
-            TapWord("The man has a fan.", tts) 
+        // 'an' Family
+        SectionBox(borderColor = ThemeBlue) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("a n", ThemeBlue, tts, "an")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("ban", "can", "fan", "man", "pan", "ran", "tan", "van"), tts)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Story Time
+        Text("STORY TIME", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = ThemeGreen, letterSpacing = 1.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = StoryBackground),
+            border = BorderStroke(2.dp, ThemeGreen),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                TapWord("A cat is on a mat.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+                TapWord("It is a fat cat.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+                TapWord("A man is sitting on the mat.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+                TapWord("The man has a fan.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
+            }
         }
     }
 }
@@ -172,20 +188,20 @@ fun DayOneContent(tts: TextToSpeech) {
 @Composable
 fun DayTwoContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("DAY 2", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFFA502))
-        Text("Phonic Drill: 'am', 'ag', 'ap'", color = Color.Gray) 
-        
+        Text("DAY 2", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = ThemeOrange, letterSpacing = 2.sp)
+        Text("Phonic Drill: 'am', 'ag', 'ap'", color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(20.dp))
         
-        SectionBox(title = "Word Family: am", color = Color(0xFFFFA502)) {
-            TapWord("a m", tts, "am") 
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TapWord("jam", tts) 
-                TapWord("ram", tts) 
-                TapWord("yam", tts) 
-                TapWord("pam", tts) 
+        SectionBox(borderColor = ThemeOrange) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("a m", ThemeOrange, tts, "am")
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("jam", "ram", "yam", "pam"), tts)
         }
     }
 }
@@ -193,54 +209,41 @@ fun DayTwoContent(tts: TextToSpeech) {
 @Composable
 fun DayThreeContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("DAY 3", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2ED573))
-        Text("Phonic Drill: 'ad', 'ab', 'ay', 'as'", color = Color.Gray) 
-        
+        Text("DAY 3", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = ThemeGreen, letterSpacing = 2.sp)
+        Text("Phonic Drill: 'ad', 'ab', 'ay', 'as'", color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(20.dp))
         
-        SectionBox(title = "Word Family: ad", color = Color(0xFF2ED573)) {
-            TapWord("a d", tts, "ad") 
-            Spacer(modifier = Modifier.height(10.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TapWord("bad", tts) 
-                    TapWord("dad", tts) 
-                    TapWord("had", tts) 
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TapWord("lad", tts) 
-                    TapWord("mad", tts) 
-                    TapWord("sad", tts) 
-                }
+        SectionBox(borderColor = ThemeGreen) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("a d", ThemeGreen, tts, "ad")
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("bad", "dad", "had", "lad", "mad", "sad"), tts)
         }
     }
 }
 
-// --- 4. CREATE NEW DAY FUNCTIONS ---
 @Composable
 fun DayFourContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("DAY 4", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E90FF))
-        Text("Phonic Drill: 'en', 'et', 'ed'", color = Color.Gray) 
-        
+        Text("DAY 4", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = ThemeBlue, letterSpacing = 2.sp)
+        Text("Phonic Drill: 'en', 'et', 'ed'", color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(20.dp))
         
-        SectionBox(title = "Word Family: en", color = Color(0xFF1E90FF)) {
-            TapWord("e n", tts, "en") 
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TapWord("hen", tts) 
-                TapWord("men", tts) 
-                TapWord("pen", tts) 
-                TapWord("ten", tts) 
+        SectionBox(borderColor = ThemeBlue) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("e n", ThemeBlue, tts, "en")
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TapWord("den", tts) 
-                TapWord("ben", tts) 
-                TapWord("sen", tts) 
-                TapWord("den", tts) 
-            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("hen", "men", "pen", "ten"), tts)
         }
     }
 }
@@ -248,52 +251,196 @@ fun DayFourContent(tts: TextToSpeech) {
 @Composable
 fun DayFiveContent(tts: TextToSpeech) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("DAY 5", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9B59B6))
-        Text("Phonic Drill: 'ig', 'in', 'ip'", color = Color.Gray) 
-        
+        Text("DAY 5", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, color = ThemePurple, letterSpacing = 2.sp)
+        Text("Phonic Drill: 'ig', 'in', 'ip'", color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(20.dp))
         
-        SectionBox(title = "Word Family: ig", color = Color(0xFF9B59B6)) {
-            TapWord("i g", tts, "ig") 
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TapWord("big", tts) 
-                TapWord("dig", tts) 
-                TapWord("pig", tts) 
-                TapWord("wig", tts) 
+        SectionBox(borderColor = ThemePurple) {
+            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                LetterBadge("i g", ThemePurple, tts, "ig")
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
+            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
+            WordGrid(listOf("big", "dig", "pig", "wig"), tts)
         }
     }
 }
 
 // ==========================================
-// REUSABLE UI COMPONENTS
+// CUSTOM UI COMPONENTS & ANIMATIONS
 // ==========================================
 
 @Composable
-fun SectionBox(title: String, color: Color, content: @Composable () -> Unit) {
+fun SectionBox(borderColor: Color, content: @Composable ColumnScope.() -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F2F6))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(2.dp, borderColor),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, color = color, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            Spacer(modifier = Modifier.height(8.dp))
             content()
         }
     }
 }
 
 @Composable
-fun TapWord(word: String, tts: TextToSpeech, phoneticPronunciation: String = word) {
+fun LetterBadge(word: String, color: Color, tts: TextToSpeech, phonetic: String) {
+    val coroutineScope = rememberCoroutineScope()
+    var isPlaying by remember { mutableStateOf(false) }
+
+    val scale by animateFloatAsState(if (isPlaying) 1.15f else 1f, label = "badge_scale")
+
     Surface(
         modifier = Modifier
-            .clickable { tts.speak(phoneticPronunciation, TextToSpeech.QUEUE_FLUSH, null, null) } 
-            .padding(4.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        shadowElevation = 2.dp
+            .scale(scale)
+            .clickable {
+                coroutineScope.launch {
+                    isPlaying = true
+                    tts.speak(phonetic, TextToSpeech.QUEUE_FLUSH, null, null)
+                    delay(600) 
+                    isPlaying = false
+                }
+            },
+        color = color,
+        shape = RoundedCornerShape(50),
+        shadowElevation = if (isPlaying) 8.dp else 4.dp
     ) {
-        Text(text = word, modifier = Modifier.padding(12.dp), fontWeight = FontWeight.Bold)
+        Text(
+            text = word,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+        )
+    }
+}
+
+@Composable
+fun TapWord(
+    word: String, 
+    tts: TextToSpeech, 
+    phoneticPronunciation: String = word, 
+    modifier: Modifier = Modifier,
+    alignLeft: Boolean = false
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var isPlaying by remember { mutableStateOf(false) }
+
+    val scale by animateFloatAsState(if (isPlaying) 1.1f else 1f, label = "word_scale")
+    val textColor by animateColorAsState(if (isPlaying) ThemeRed else TextDark, label = "word_color")
+    val shadow by animateDpAsState(if (isPlaying) 6.dp else 1.dp, label = "word_shadow")
+    val bgColor by animateColorAsState(if (isPlaying) Color(0xFFFFF2CC) else Color.White, label = "word_bg")
+
+    Surface(
+        modifier = modifier
+            .scale(scale)
+            .clickable {
+                coroutineScope.launch {
+                    isPlaying = true 
+                    tts.speak(phoneticPronunciation, TextToSpeech.QUEUE_FLUSH, null, null)
+                    delay(600) 
+                    isPlaying = false 
+                }
+            },
+        shape = RoundedCornerShape(25.dp),
+        color = bgColor,
+        border = BorderStroke(1.dp, Color(0xFFDFE4EA)),
+        shadowElevation = shadow
+    ) {
+        Text(
+            text = word,
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp),
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = textColor,
+            textAlign = if (alignLeft) TextAlign.Start else TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun WordGrid(words: List<String>, tts: TextToSpeech) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        words.chunked(2).forEach { rowWords ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                rowWords.forEach { word ->
+                    TapWord(
+                        word = word,
+                        tts = tts,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                // If odd number of words, add an empty space to keep grid layout intact
+                if (rowWords.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DashedDivider(modifier: Modifier = Modifier, color: Color = Color(0xFFCED6E0), thickness: Dp = 1.dp) {
+    Canvas(modifier = modifier.fillMaxWidth().height(thickness)) {
+        drawLine(
+            color = color,
+            start = Offset(0f, 0f),
+            end = Offset(size.width, 0f),
+            strokeWidth = thickness.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+        )
+    }
+}
+
+@Composable
+fun BottomNavigationBar(currentDay: Int, totalDays: Int, onPrev: () -> Unit, onNext: () -> Unit) {
+    Surface(
+        shadowElevation = 8.dp,
+        color = Color.White
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = onPrev, 
+                enabled = currentDay > 1,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF3742FA),
+                    disabledContainerColor = Color(0xFFCED6E0)
+                ),
+                shape = RoundedCornerShape(25.dp)
+            ) { Text("◀ Prev", fontWeight = FontWeight.Bold) }
+            
+            Text(
+                text = "Day $currentDay / $totalDays", 
+                fontWeight = FontWeight.Bold,
+                color = TextDark,
+                modifier = Modifier
+                    .background(Color(0xFFF1F2F6), RoundedCornerShape(20.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            
+            Button(
+                onClick = onNext, 
+                enabled = currentDay < totalDays,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF3742FA),
+                    disabledContainerColor = Color(0xFFCED6E0)
+                ),
+                shape = RoundedCornerShape(25.dp)
+            ) { Text("Next ▶", fontWeight = FontWeight.Bold) }
+        }
     }
 }
