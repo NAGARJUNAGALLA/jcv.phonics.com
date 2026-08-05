@@ -1,5 +1,6 @@
 package jcv.phonics.com
 
+import android.app.Activity
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import androidx.activity.ComponentActivity
@@ -14,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,12 +24,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
@@ -43,6 +45,16 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         tts = TextToSpeech(this, this)
         
         setContent {
+            // Set the mobile notification/status bar to White with dark icons
+            val view = LocalView.current
+            if (!view.isInEditMode) {
+                SideEffect {
+                    val window = (view.context as Activity).window
+                    window.statusBarColor = android.graphics.Color.WHITE
+                    WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+                }
+            }
+
             // State to control when to show the splash screen vs the main app
             var showSplash by remember { mutableStateOf(true) }
 
@@ -141,24 +153,34 @@ fun PhonicsApp(tts: TextToSpeech) {
     Scaffold(
         containerColor = AppBackground,
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFFF6B81), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                    .padding(vertical = 20.dp, horizontal = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Surface(
+                color = Color.White,
+                shadowElevation = 4.dp,
+                shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
             ) {
-                Text("Phonics Bootcamp", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "🔊 Tap any word or letter to hear it!",
+                Row(
                     modifier = Modifier
-                        .background(Color(0xFFFECA57), shape = RoundedCornerShape(20.dp))
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
-                    fontWeight = FontWeight.Bold,
-                    color = TextDark,
-                    fontSize = 14.sp
-                )
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.boy_reading),
+                        contentDescription = "JCV Phonics Mascot",
+                        modifier = Modifier.size(50.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    Text(
+                        text = "JCV PHONICS",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = ThemeBlue,
+                        letterSpacing = 1.sp
+                    )
+                }
             }
         },
         bottomBar = {
@@ -178,8 +200,7 @@ fun PhonicsApp(tts: TextToSpeech) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                MascotHeader(tts)
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 when (currentDay.value) {
                     1 -> DayOneContent(tts)
@@ -189,68 +210,6 @@ fun PhonicsApp(tts: TextToSpeech) {
                     5 -> DayFiveContent(tts)
                 }
             }
-        }
-    }
-}
-
-// ==========================================
-// MASCOT HEADER COMPONENT
-// ==========================================
-
-@Composable
-fun MascotHeader(tts: TextToSpeech) {
-    val coroutineScope = rememberCoroutineScope()
-    var isSpeaking by remember { mutableStateOf(false) }
-    val mascotScale by animateFloatAsState(if (isSpeaking) 1.05f else 1f, label = "mascot_bounce")
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Surface(
-            shape = CircleShape,
-            color = Color.White, 
-            modifier = Modifier
-                .size(90.dp)
-                .scale(mascotScale)
-                .clickable {
-                    coroutineScope.launch {
-                        isSpeaking = true
-                        tts.speak("Let's read together!", TextToSpeech.QUEUE_FLUSH, null, null)
-                        delay(1500)
-                        isSpeaking = false
-                    }
-                },
-            shadowElevation = 4.dp
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(id = R.drawable.boy_reading),
-                    contentDescription = "Boy Reading Mascot",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Surface(
-            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 4.dp),
-            color = Color.White,
-            border = BorderStroke(2.dp, ThemeBlue),
-            shadowElevation = 2.dp,
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = "Hi! I'm ready to read. Tap me to say hello!",
-                modifier = Modifier.padding(12.dp),
-                fontWeight = FontWeight.Bold,
-                color = ThemeBlue,
-                fontSize = 14.sp
-            )
         }
     }
 }
