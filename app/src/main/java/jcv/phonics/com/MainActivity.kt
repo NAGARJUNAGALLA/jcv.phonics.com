@@ -7,12 +7,15 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +25,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -71,7 +75,7 @@ val StoryBackground = Color(0xFFFFF2CC)
 @Composable
 fun PhonicsApp(tts: TextToSpeech) {
     val currentDay = remember { mutableStateOf(1) }
-    val totalDays = 5 // Expanded to 5 Days
+    val totalDays = 5
 
     Scaffold(
         containerColor = AppBackground,
@@ -113,6 +117,11 @@ fun PhonicsApp(tts: TextToSpeech) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
+                // The new Mascot Header appears at the very top of the scrollable content!
+                MascotHeader(tts)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+
                 when (currentDay.value) {
                     1 -> DayOneContent(tts)
                     2 -> DayTwoContent(tts)
@@ -121,6 +130,74 @@ fun PhonicsApp(tts: TextToSpeech) {
                     5 -> DayFiveContent(tts)
                 }
             }
+        }
+    }
+}
+
+// ==========================================
+// NEW MASCOT COMPONENT
+// ==========================================
+
+@Composable
+fun MascotHeader(tts: TextToSpeech) {
+    val coroutineScope = rememberCoroutineScope()
+    var isSpeaking by remember { mutableStateOf(false) }
+    val mascotScale by animateFloatAsState(if (isSpeaking) 1.05f else 1f, label = "mascot_bounce")
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        // 1. The Boy Image (Placeholder)
+        Surface(
+            shape = CircleShape,
+            color = Color(0xFFE0F7FA), // Soft blue background for the placeholder
+            modifier = Modifier
+                .size(90.dp)
+                .scale(mascotScale)
+                .clickable {
+                    coroutineScope.launch {
+                        isSpeaking = true
+                        tts.speak("Let's read together!", TextToSpeech.QUEUE_FLUSH, null, null)
+                        delay(1500)
+                        isSpeaking = false
+                    }
+                },
+            shadowElevation = 4.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                // TODO: WHEN YOU UPLOAD YOUR AI IMAGE, DELETE THIS TEXT COMPOSABLE:
+                
+                
+                // TODO: AND UNCOMMENT THIS IMAGE COMPOSABLE BELOW:
+                Image(
+                   painter = painterResource(id = R.drawable.boy_reading),
+                   contentDescription = "Boy Reading Mascot",
+                  modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // 2. The Speech Bubble
+        Surface(
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 4.dp),
+            color = Color.White,
+            border = BorderStroke(2.dp, ThemeBlue),
+            shadowElevation = 2.dp,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = "Hi! I'm ready to read. Tap me to say hello!",
+                modifier = Modifier.padding(12.dp),
+                fontWeight = FontWeight.Bold,
+                color = ThemeBlue,
+                fontSize = 14.sp
+            )
         }
     }
 }
@@ -136,7 +213,6 @@ fun DayOneContent(tts: TextToSpeech) {
         Text("Phonic Drill: 'at' and 'an'", color = Color.Gray, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 'at' Family
         SectionBox(borderColor = ThemeRed) {
             Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
             DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
@@ -151,7 +227,6 @@ fun DayOneContent(tts: TextToSpeech) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // 'an' Family
         SectionBox(borderColor = ThemeBlue) {
             Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
             DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
@@ -166,7 +241,6 @@ fun DayOneContent(tts: TextToSpeech) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Story Time
         Text("STORY TIME", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = ThemeGreen, letterSpacing = 1.sp)
         Spacer(modifier = Modifier.height(8.dp))
         Card(
@@ -378,7 +452,6 @@ fun WordGrid(words: List<String>, tts: TextToSpeech) {
                         modifier = Modifier.weight(1f)
                     )
                 }
-                // If odd number of words, add an empty space to keep grid layout intact
                 if (rowWords.size == 1) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
