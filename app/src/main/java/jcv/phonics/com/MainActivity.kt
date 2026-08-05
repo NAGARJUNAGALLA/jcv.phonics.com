@@ -330,49 +330,6 @@ fun DayTwoContent(tts: TextToSpeech) {
             DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
             WordGrid(listOf("jam", "ram", "yam", "pam"), tts)
         }
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        SectionBox(borderColor = Theme blue) {
-            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
-            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                LetterBadge("a p", ThemeOrange, tts, "ap")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
-            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
-            WordGrid(listOf("cap", "gap", "lap", "map","nap","rap","sap","tap"), tts)
-        }
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        SectionBox(borderColor = ThemeOrange) {
-            Text("Word Family", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
-            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                LetterBadge("a g", ThemeOrange, tts, "ag")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Words to Blend", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp)
-            DashedDivider(modifier = Modifier.padding(vertical = 12.dp))
-            WordGrid(listOf("bag", "rag", "tag", "wag"), tts)
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text("STORY TIME", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = ThemeGreen, letterSpacing = 1.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = StoryBackground),
-            border = BorderStroke(2.dp, ThemeGreen),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                TapWord("A bag is on my lap.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
-                TapWord("It is my bag.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
-                TapWord("A can of jam is in my bag.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
-                TapWord("A tag is on the bag.", tts, modifier = Modifier.fillMaxWidth(), alignLeft = true)
-            }
-        }
     }
 }
 
