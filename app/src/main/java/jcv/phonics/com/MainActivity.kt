@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-// Explicit imports required for Kotlin delegation
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,8 +52,9 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
 @Composable
 fun PhonicsApp(tts: TextToSpeech) {
-    // Changed to mutableStateOf to ensure broad compatibility
-    var currentDay by remember { mutableStateOf(1) }
+    // FIX: Using '=' instead of 'by' and accessing via .value below
+    // This bypasses the CI compiler bug with Kotlin delegates
+    val currentDay = remember { mutableStateOf(1) }
     val totalDays = 3 
 
     Scaffold(
@@ -81,10 +80,10 @@ fun PhonicsApp(tts: TextToSpeech) {
         },
         bottomBar = {
             BottomNavigationBar(
-                currentDay = currentDay,
+                currentDay = currentDay.value,
                 totalDays = totalDays,
-                onPrev = { if (currentDay > 1) currentDay-- },
-                onNext = { if (currentDay < totalDays) currentDay++ }
+                onPrev = { if (currentDay.value > 1) currentDay.value-- },
+                onNext = { if (currentDay.value < totalDays) currentDay.value++ }
             )
         }
     ) { paddingValues ->
@@ -96,7 +95,7 @@ fun PhonicsApp(tts: TextToSpeech) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                when (currentDay) {
+                when (currentDay.value) {
                     1 -> DayOneContent(tts)
                     2 -> DayTwoContent(tts)
                     3 -> DayThreeContent(tts)
