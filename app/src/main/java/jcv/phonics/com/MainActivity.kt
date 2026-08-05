@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -42,8 +41,16 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tts = TextToSpeech(this, this)
+        
         setContent {
-            PhonicsApp(tts)
+            // State to control when to show the splash screen vs the main app
+            var showSplash by remember { mutableStateOf(true) }
+
+            if (showSplash) {
+                SplashScreen(onTimeout = { showSplash = false })
+            } else {
+                PhonicsApp(tts)
+            }
         }
     }
 
@@ -71,6 +78,60 @@ val ThemeOrange = Color(0xFFFFA502)
 val ThemePurple = Color(0xFF9B59B6)
 val TextDark = Color(0xFF2F3542)
 val StoryBackground = Color(0xFFFFF2CC)
+
+// ==========================================
+// SPLASH SCREEN COMPONENT
+// ==========================================
+
+@Composable
+fun SplashScreen(onTimeout: () -> Unit) {
+    // Timer waits 2.5 seconds before triggering the transition to the main app
+    LaunchedEffect(Unit) {
+        delay(2500)
+        onTimeout()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.boy_reading),
+                contentDescription = "JCV Phonics Mascot",
+                modifier = Modifier.size(250.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text(
+                text = "JCV PHONICS",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = ThemeBlue,
+                letterSpacing = 2.sp
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Learn to Read!",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Gray
+            )
+        }
+    }
+}
+
+// ==========================================
+// MAIN APP CONTENT
+// ==========================================
 
 @Composable
 fun PhonicsApp(tts: TextToSpeech) {
@@ -117,9 +178,7 @@ fun PhonicsApp(tts: TextToSpeech) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                // The new Mascot Header appears at the very top of the scrollable content!
                 MascotHeader(tts)
-                
                 Spacer(modifier = Modifier.height(16.dp))
 
                 when (currentDay.value) {
@@ -135,7 +194,7 @@ fun PhonicsApp(tts: TextToSpeech) {
 }
 
 // ==========================================
-// NEW MASCOT COMPONENT
+// MASCOT HEADER COMPONENT
 // ==========================================
 
 @Composable
@@ -151,10 +210,9 @@ fun MascotHeader(tts: TextToSpeech) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        // 1. The Boy Image (Placeholder)
         Surface(
             shape = CircleShape,
-            color = Color(0xFFE0F7FA), // Soft blue background for the placeholder
+            color = Color.White, 
             modifier = Modifier
                 .size(90.dp)
                 .scale(mascotScale)
@@ -169,21 +227,16 @@ fun MascotHeader(tts: TextToSpeech) {
             shadowElevation = 4.dp
         ) {
             Box(contentAlignment = Alignment.Center) {
-                // TODO: WHEN YOU UPLOAD YOUR AI IMAGE, DELETE THIS TEXT COMPOSABLE:
-                
-                
-                // TODO: AND UNCOMMENT THIS IMAGE COMPOSABLE BELOW:
                 Image(
-                   painter = painterResource(id = R.drawable.boy_reading),
-                   contentDescription = "Boy Reading Mascot",
-                  modifier = Modifier.fillMaxSize()
+                    painter = painterResource(id = R.drawable.boy_reading),
+                    contentDescription = "Boy Reading Mascot",
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // 2. The Speech Bubble
         Surface(
             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 4.dp),
             color = Color.White,
@@ -366,7 +419,6 @@ fun SectionBox(borderColor: Color, content: @Composable ColumnScope.() -> Unit) 
 fun LetterBadge(word: String, color: Color, tts: TextToSpeech, phonetic: String) {
     val coroutineScope = rememberCoroutineScope()
     var isPlaying by remember { mutableStateOf(false) }
-
     val scale by animateFloatAsState(if (isPlaying) 1.15f else 1f, label = "badge_scale")
 
     Surface(
